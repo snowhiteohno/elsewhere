@@ -7,7 +7,7 @@ A live travel concierge that opens booking websites, checks trip details and hel
 
 **Powered by TinyFish** · React · TypeScript · INR budgets
 
-[Live app](https://cartproof.scalerailabs-4179.chatgpt.site) · [Explore the workflow](#explore-the-workflow) · [Run locally](#run-locally) · [Submission deck](submission/Elsewhere-Submission.pptx) · [Architecture](#under-the-hood)
+[Live app](https://elsewhere-murex.vercel.app) · [Explore the workflow](#explore-the-workflow) · [Run locally](#run-locally) · [Submission deck](submission/Elsewhere-Submission.pptx) · [Architecture](#under-the-hood)
 
 ![Elsewhere local application homepage](docs/images/elsewhere-home.png)
 
