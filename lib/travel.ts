@@ -16,12 +16,12 @@ export const preparationSchema=z.object({status:z.enum(['ready','payment_require
 export type Preparation=z.infer<typeof preparationSchema>;
 export const reservationSchema=z.object({status:z.enum(['confirmed','request_submitted','not_submitted','needs_user']),confirmationNumber:z.string().max(200),summary:z.string().max(1600),bookingUrl:z.string().max(2500),evidence:z.string().max(2000)});
 export type Reservation=z.infer<typeof reservationSchema>;
-export type TravelJob={id:string;phase:'research'|'prepare'|'reserve';category:Category;status:string;runId?:string;steps:string[];streamingUrl?:string;screenshotUrl?:string;offers?:Offer[];summary?:string;warnings?:string[];preparation?:Preparation;reservation?:Reservation;error?:string;createdAt:number};
+export type TravelJob={id:string;phase:'research'|'prepare'|'reserve';category:Category;status:string;runId?:string;offerId?:string;steps:string[];streamingUrl?:string;screenshotUrl?:string;offers?:Offer[];summary?:string;warnings?:string[];preparation?:Preparation;reservation?:Reservation;error?:string;createdAt:number};
 export type BoardItem={offer:Offer;day:number;time:string};
 
 export function publicUrl(value:unknown):string|undefined{
  if(typeof value!=='string'||value.length>2500)return;
- try{const u=new URL(value);const host=u.hostname.toLowerCase();if(u.protocol!=='https:'||u.username||u.password||u.port&&u.port!=='443'||!host.includes('.')||/^\d+(\.\d+){3}$/.test(host)||host.includes(':')||/(^|\.)(localhost|local|internal|test|invalid|example|onion)$/.test(host)||/\.(local|internal|localhost)$/.test(host))return;
+ try{const u=new URL(value);const host=u.hostname.toLowerCase().replace(/\.$/,'');if(u.protocol!=='https:'||u.username||u.password||u.port&&u.port!=='443'||!host.includes('.')||/^\d+(\.\d+){3}$/.test(host)||host.includes(':')||/(^|\.)(localhost|local|internal|test|invalid|example|onion)$/.test(host)||/\.(local|internal|localhost)$/.test(host))return;
  for(const key of u.searchParams.keys())if(/^(access_token|token|auth|password|secret|sessionid|session_id|email|phone|api_key)$/i.test(key))return;
  return u.href;}catch{return;}
 }
