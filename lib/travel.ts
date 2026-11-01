@@ -25,7 +25,7 @@ export function publicUrl(value:unknown):string|undefined{
  for(const key of u.searchParams.keys())if(/^(access_token|token|auth|password|secret|sessionid|session_id|email|phone|api_key)$/i.test(key))return;
  return u.href;}catch{return;}
 }
-export function formatMoney(amount:number,currency:string){try{return new Intl.NumberFormat('en',{style:'currency',currency,maximumFractionDigits:currency==='JPY'?0:2}).format(amount)}catch{return `${currency} ${amount.toFixed(2)}`}}
+export function formatMoney(amount:number,currency:string){try{return new Intl.NumberFormat(currency==='INR'?'en-IN':'en',{style:'currency',currency,maximumFractionDigits:currency==='JPY'?0:2}).format(amount)}catch{return `${currency} ${amount.toFixed(2)}`}}
 export function tripDays(trip:Trip){return Math.round((Date.parse(trip.end)-Date.parse(trip.start))/86400000)+1;}
 export function dateForDay(trip:Trip,day:number){return new Date(Date.parse(trip.start)+(day-1)*86400000).toISOString().slice(0,10);}
 export function budgetTotals(items:BoardItem[]){const totals:Record<string,number>={};let unknown=0;for(const {offer:o} of items){if(o.totalAmount===null||o.priceStatus!=='total'||!o.dateChecked){unknown++;continue;}totals[o.currency]=(totals[o.currency]||0)+o.totalAmount;}return {totals,unknown};}

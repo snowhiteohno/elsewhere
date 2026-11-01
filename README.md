@@ -1,91 +1,229 @@
-# Elsewhere
+<div align="center">
 
-A live travel concierge built with TinyFish. Enter a destination anywhere, origin, dates, adults, budget, interests and pace. Elsewhere discovers public providers and sends browser agents to interact with their real search forms, calendars and booking flows.
+# elsewhere
+### Trips, put into motion.
 
-## What works
+A live travel concierge that opens booking websites, checks trip details and helps you prepare your next booking.
 
-- Destination-independent source discovery through TinyFish Search for stays, transport, experiences, rentals and restaurants.
-- Anonymous TinyFish browser research with date/party selection, up to two provider sources per run, structured evidence and actual provider URLs. No saved grocery profiles are used.
-- Live activity, stop controls, provider fallback selection and partial results when individual websites fail.
-- Saved trip board, itinerary draft from date-checked available options, editable day/time assignments, overlap and changed-date warnings, calendar/JSON export and print.
-- Separate totals for each currency. Indicative prices, missing prices and unchecked dates are excluded from observed totals. There is no invented exchange rate or all-inclusive budget claim.
-- Booking preparation: reopen a selected result, inspect dates/party/terms and stop before submitting or paying.
-- Explicitly approved **free reservations only** can be submitted when the inspected provider supports it without deposits, card guarantees, fees or cancellation liability. A confirmation requires a provider reference. Enquiries are not auto-submitted.
-- Paid bookings, login, OTP, identity documents and unsupported checkout flows require the user on the provider website. Browser checkout state is not assumed to transfer to the user's browser.
+**Powered by TinyFish** · React · TypeScript · INR budgets
+
+[Explore the workflow](#explore-the-workflow) · [Run locally](#run-locally) · [Submission deck](submission/Elsewhere-Submission.pptx) · [Architecture](#under-the-hood)
+
+![Elsewhere local application homepage](docs/images/elsewhere-home.png)
+
+</div>
+
+## Why Elsewhere?
+
+A weekend away can involve a hotel portal, a bus operator, a local rafting company and a rental shop. Each has a different calendar and booking flow.
+
+Elsewhere turns one trip brief into separate browser tasks. TinyFish agents discover providers, interact with their public booking controls and return findings you can organise into an itinerary.
+
+**This is a working browser-automation prototype.** Research and booking preparation run live. Paid checkout stays with the traveller. The automatic free-reservation path is implemented, but a completed real reservation has not yet been validated end to end.
+
+## Explore the workflow
+
+Click each stage to see what actually happens.
+
+<details open>
+<summary><strong>01 — Describe your trip</strong></summary>
+
+Enter any destination, your departure city, future dates, adult travellers, a budget in rupees, interests and pace. Choose the categories you need:
+
+| Stays | Getting there | Experiences | Rentals | Restaurants |
+|---|---|---|---|---|
+| Hotels and rooms | Flights, buses and trains | Local operators and activities | Bikes, scooters and cars | Food and table bookings |
+
+Global destination input is supported. Successful access depends on each provider's website.
+
+</details>
+
+<details>
+<summary><strong>02 — Watch TinyFish work</strong></summary>
+
+The backend discovers up to four distinct source domains per category. Each browser task attempts at most two sources and returns up to three options.
+
+Agents try to select dates and party size, inspect rooms or slots, and collect visible prices, terms and source links. The app polls activity every eight seconds. Findings appear when individual category tasks finish.
+
+Browser execution requests a 240-second limit per job. Queue time is additional, so a five-category search can take several minutes. Selecting one category is a useful first live check.
+
+</details>
+
+<details>
+<summary><strong>03 — Inspect the evidence</strong></summary>
+
+Each returned option can include its provider, observed URL, date, price, availability status, cancellation terms, requirements and evidence text.
+
+The server checks the output structure, links and date consistency. These checks do not independently prove every browser observation. Unknown prices and unconfirmed dates remain explicit.
+
+Provider photos may fail. Any replacement photography is labelled as inspiration, not an image of that listing.
+
+</details>
+
+<details>
+<summary><strong>04 — Build your itinerary</strong></summary>
+
+Save individual finds or create a draft from available, date-checked options. Edit days and times, review detectable overlaps, and export JSON or a calendar file.
+
+The draft uses deterministic rules. It does not optimise routes, traffic, transfer times or the entire trip against your budget. Calendar entries describe plans, not bookings.
+
+</details>
+
+<details>
+<summary><strong>05 — Prepare a booking</strong></summary>
+
+Preparation starts a separate browser task that reopens the selected option, reconstructs dates and party size, and inspects the next safe booking step.
+
+Paid checkout, login and OTP require the traveller. A remote browser's selections are not guaranteed to transfer to the local browser.
+
+Eligible free reservations require explicit approval, a zero total and no deposit, card guarantee or cancellation liability. A confirmation requires a provider reference. This submission path still needs real end-to-end validation.
+
+</details>
+
+## Under the hood
+
+```mermaid
+flowchart TD
+    A[Trip brief in React] --> B[Server validation]
+    B --> C[TinyFish Search]
+    C --> D[Signed source choices]
+    D --> E[TinyFish browser jobs by category]
+    E --> F[Structured findings and activity]
+    F --> G[Schema, URL and date checks]
+    G --> H[Discovery cards and itinerary]
+    H --> I[Booking preparation job]
+    I --> J[User checkout or approved eligible free reservation]
+    B <--> K[(D1 / SQLite job records)]
+    F --> K
+    H <--> L[Browser local storage]
+```
+
+| TinyFish provides | Elsewhere adds |
+|---|---|
+| Web search | Travel-specific source selection |
+| Remote browser execution | Bounded category tasks and durable job state |
+| Website interaction and extraction | Structured contracts and date checks |
+| Browser activity and results | Itinerary editing and booking approval gates |
+
+The travel pipeline does not call a separate OpenAI or Claude API. The app uses React 19 and TypeScript with Next-style App Router files, running through Vinext/Vite. Zod validates data. D1-compatible SQLite stores jobs, with Drizzle migrations.
 
 ## Run locally
 
-Node 22.18+ or Node 24+ is recommended. Dependencies are already installed in this checkout.
+**Prerequisites:** Node 22.18+ or Node 24+, npm, and a TinyFish API key with sufficient credit. Browser runs incur real usage.
 
-```sh
-npm install
-# Configure the keys below in a gitignored .env.local file.
-# An inherited stale key overrides Node's env-file loading; unset it first.
-unset TINYFISH_API_KEY
-npm run dev -- --host 127.0.0.1 --port 3004
+```bash
+git clone https://github.com/snowhiteohno/elsewhere.git
+cd elsewhere
+npm ci
+cp .env.example .env.local
+openssl rand -hex 32
 ```
 
-Open http://127.0.0.1:3004. The keys remain server-side:
+Edit `.env.local` privately:
 
-```text
-TINYFISH_API_KEY
-VERRO_SIGNING_SECRET
+```dotenv
+TINYFISH_API_KEY=your_tinyfish_key
+VERRO_SIGNING_SECRET=your_generated_random_secret
 VERRO_LIVE_ENABLED=true
 ```
 
-The VERRO-prefixed configuration names are retained for compatibility with the existing local setup. No Browser Context Profile is needed for travel research. Never put secrets in goals, public variables or frontend code.
+The `VERRO_` names are retained from the original project for compatibility. Travel research uses anonymous browser sessions and does not require saved grocery profiles.
 
-## Database and deployment
-
-`.openai/hosting.json` retains the existing Site ID and declares a D1 binding named `DB`. Jobs are owner-scoped and stored in `travel_jobs`. Unique action IDs prevent replaying the same submitted action. Ambiguous starts stay uncertain rather than being retried automatically. A 40-run/day/user cap limits unintended usage; provider wallet limits also apply.
-
-Generate migrations with `npm run db:generate`. For a new local database, build and apply each unapplied migration once:
-
-```sh
+```bash
+# Avoid an inherited stale key overriding .env.local.
+unset TINYFISH_API_KEY
 npm run build
+
+# Apply once for a new local database.
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_furry_the_hand.sql
+
+npm run dev -- --host 127.0.0.1 --port 3004
 ```
 
-Sites provisions production D1 and applies migrations on deployment. Configure the three runtime keys as Sites secrets before publishing. Production write endpoints require the Sites-authenticated user; the existing owner-only audience is preserved. No separate travel-account sign-in is required for research.
+Open **http://127.0.0.1:3004**. This address is local to your computer, not a public demo URL. This GitHub upload does not deploy the app or change the earlier hosted site's access.
 
-Trip boards are saved in this browser's local storage; they do not sync across devices. Contact details for an approved free reservation are not saved in the trip board or D1 context, but are sent to TinyFish and the selected provider as disclosed in the approval form. Browser run history may contain submitted contact details.
+The existing `.openai/hosting.json` identifies the original hosting project. Cloning the repository does not grant access to that project. Local development is the documented path here.
 
-## Evidence and limits
+## What we have validated
 
-Global discovery does not mean every provider supports browser automation or anonymous checkout. Blocking sites return an explicit failure and can be replaced with another discovered source. A provider's successful run status alone is not an availability or booking confirmation.
+| Live check | Observed outcome |
+|---|---|
+| Lisbon hotel research | Selected dates and occupancy; returned three stay options |
+| Lisbon booking preparation | Reopened a room selection and returned cancellation terms and excluded taxes |
+| Kyoto experience research | Reached a tea-ceremony booking form with date-specific information; peak-period pricing still needed confirmation |
 
-- Dates must be valid, no earlier than today, and span 1–14 nights. The first version supports 1–12 adults; child fare/occupancy logic is not implemented.
-- Research is bounded to 240 seconds per browser run, with no custom max_steps (the current TinyFish account rejects it).
-- Prices are major currency units. `total` means an observed total for the selected party/duration; `from` prices are not treated as totals.
-- Times are provider-local. Unknown duration, transfer time, timezone, taxes or cancellation rules remain unknown. Calendar events are planned events, not vouchers.
-- Changing itinerary dates does not amend a reservation. Recheck the provider before booking.
-- The agent is instructed to stop at financial commitments. There is no payment integration or universal transaction firewall. Only explicit, no-liability free reservations are eligible for agent submission.
-- The app does not claim operator licensing, safety certification, lowest market price or guaranteed inventory.
-- Starts and runs are not automatically repeated after uncertainty. Check the provider before another reservation attempt.
+These checks took place on **1 November 2026**. They are evidence of those runs, not a guarantee of current inventory. No purchase or reservation was made during these checks.
 
-## Verification
-
-Live check on 2026-11-01: Booking.com returned three Lisbon stay options after selecting 20–23 November 2026 and two adults. Prices were displayed in USD although the input budget was EUR; the UI keeps these currencies separate and labels unverified taxes. Desktop and 390px mobile layouts were checked, including adding a real returned offer to the itinerary. Kyoto research reached MAIKOYA’s date-specific tea ceremony booking form; pricing still needs confirmation because peak-period rates may apply. Hotel preparation reopened the Lisbon selection, selected a room and returned cancellation terms and excluded taxes, then stopped for the user to finish the paid booking. No reservation or payment has been made.
-
-```sh
+```bash
 npm test
 npx tsc --noEmit --incremental false
 npm run build
 ```
 
-Tests use isolated fixtures under `tests/`; they are never loaded by the application. Travel tests cover signed source authorization, ownership, replay prevention, supported TinyFish schemas, malformed evidence, exact-date availability, currency separation, itinerary conflicts, and approval/confirmation gates.
+The project currently has **16 travel tests and 32 preserved legacy tests**. Tests cover validation and safeguards, not universal third-party website compatibility. Unit tests do not require live API credentials.
 
-Live smoke tests use `scripts/check-travel-live.mjs` and store private run state in ignored `work/`. `start` incurs real browser usage; do not repeat it when existing runs are active. `poll` retrieves those runs without starting more. The script's fixed trips are test inputs only and are not imported by the app. Browser QA uses `scripts/check-travel-ui.mjs` against an existing local Chrome debugging endpoint and only the task's own tab.
+## Judge's notebook
 
-## Source map
+<details>
+<summary><strong>How is this different from a text itinerary?</strong></summary>
 
-- `app/page.tsx`, `app/globals.css`: travel experience, discovery, activity, itinerary and booking approval.
-- `lib/travel.ts`: shared contracts, dates, currency totals, URL checks and calendar export.
-- `lib/travel-server.ts`: TinyFish discovery, browser tasks, signed sources, D1 job records and booking gates.
-- `app/api/travel/`: configuration, discovery and job endpoints.
-- `db/schema.ts`, `drizzle/`: durable job schema.
-- `worker/index.ts`, `lib/server-env.ts`: request-scoped runtime secrets/bindings.
+The browser attempts to interact with real date and availability controls. Elsewhere coordinates that research across provider categories and prepares the next booking step. Other browser agents can perform similar actions; the travel workflow is the product's contribution.
 
-The previous Verro grocery source is preserved in `lib/verro.ts`, `lib/tinyfish.ts` and its tests. Its original page/styles/README are backed up under ignored `work/verro-preserved/`. Grocery endpoints are retired and cannot start new grocery runs. The existing max_steps fix is preserved.
+</details>
 
-Visual direction takes inspiration from Travel Productions: oversized condensed type, a dark cinematic canvas, layered imagery and editorial spacing. Photography is from Unsplash, stored in `public/images/`. Destination inspiration tiles are starter inputs, not fabricated search results. Antonio, DM Sans and Instrument Serif are self-hosted with their licenses in `public/fonts/`. Motion supports pause and reduced-motion preferences.
+<details>
+<summary><strong>Can it book without signing into every provider?</strong></summary>
+
+Public flows often allow research and preparation without accounts. Login, OTP and paid checkout remain with the traveller when required. Anonymous research does not imply universal anonymous booking.
+
+</details>
+
+<details>
+<summary><strong>How do prices and rupees work?</strong></summary>
+
+Budgets use INR. Agents request INR on provider sites where available, otherwise they preserve the displayed currency. There is no automatic FX conversion. Observed totals keep currencies separate and exclude indicative prices or unchecked dates. Unknown taxes and unlisted costs can remain outside the total.
+
+</details>
+
+<details>
+<summary><strong>How are secrets, consent and retries handled?</strong></summary>
+
+Credentials stay server-side. Source tickets expire and bind sources to an owner. Write routes require the same origin. Unique request IDs reduce duplicate job starts. Reservation submission requires explicit approval and does not automatically retry ambiguous outcomes.
+
+Some action boundaries are instructions to the browser agent, not a universal transaction firewall. Approved contact details go to TinyFish and the provider and may appear in their execution records. Private run logs and local databases are excluded from this repository.
+
+</details>
+
+<details>
+<summary><strong>What are the current limits?</strong></summary>
+
+Provider blocks, CAPTCHAs, logins and unusual booking interfaces can interrupt runs. Browser extraction can be incorrect. Source discovery does not certify operator legitimacy. The prototype supports 1–12 adults and 1–14 nights, with no child-fare logic. Queueing and browser execution affect latency and cost; no reliable average per-trip cost has been established.
+
+</details>
+
+## Repository guide
+
+| Location | Purpose |
+|---|---|
+| [`app/page.tsx`](app/page.tsx) | Planner, discoveries, itinerary and approval UI |
+| [`app/api/travel/`](app/api/travel/) | Discovery and job endpoints |
+| [`lib/travel-server.ts`](lib/travel-server.ts) | TinyFish calls, source tickets and job lifecycle |
+| [`lib/travel.ts`](lib/travel.ts) | Contracts, itinerary rules and currency handling |
+| [`db/`](db/) and [`drizzle/`](drizzle/) | Durable job schema and migrations |
+| [`tests/travel.test.mjs`](tests/travel.test.mjs) | Travel validation and safety tests |
+| [`submission/Elsewhere-Submission.pptx`](submission/Elsewhere-Submission.pptx) | 12-slide pitch with technical appendix and speaker notes |
+| [`docs/ENGINEERING.md`](docs/ENGINEERING.md) | Detailed implementation and runtime notes |
+
+The previous grocery experiment remains in legacy modules and tests. Its write endpoints are retired.
+
+## Next milestones
+
+- [ ] Show queued and running work more clearly
+- [ ] Improve time to the first useful result
+- [ ] Strengthen total-price verification
+- [ ] Validate a complete, explicitly approved free reservation
+- [ ] Add transfer-aware itinerary scheduling
+
+## Credits
+
+Browser automation and search: [TinyFish](https://tinyfish.ai). Photography: Unsplash. Self-hosted fonts: Antonio, DM Sans and Instrument Serif, with licenses in [`public/fonts/`](public/fonts/). Visual inspiration: [Travel Productions](https://travelproductions.film/).
