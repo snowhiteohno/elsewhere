@@ -1,0 +1,26 @@
+import { fixtureQuote } from './fixtures.mjs';
+const SAMPLE='Creatine monohydrate, 250 g, unflavoured, no blends\nMilk, 2 L, lactose-free\nPeanut butter, 500 g, no added sugar';
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { build } from 'esbuild';
+await build({entryPoints:['lib/tinyfish.ts'],bundle:true,platform:'node',format:'esm',outfile:'outputs/adapter-test.mjs'});
+const adapter=await import('../outputs/adapter-test.mjs');
+const {parseList}=await import('../lib/verro.ts');
+process.env.VERRO_LIVE_ENABLED='true';
+process.env.TINYFISH_API_KEY='test-placeholder-not-a-real-key';
+process.env.VERRO_SIGNING_SECRET='test-only-signing-secret-32-characters-long';
+process.env.TINYFISH_PROFILE_BLINKIT='prof_test';
+const brief={items:parseList(SAMPLE),address:'Synthetic test address 560034',mode:'flexible',delivery:'today',coupons:true};
+let calls=[];let nextResponse={run_id:'run-test'};
+globalThis.fetch=async(url,init)=>{calls.push({url,init});return new Response(JSON.stringify(String(url).includes('/profiles/')?{domains:[{domain:'blinkit.com',cookie_count:2}]}:nextResponse),{status:200,headers:{'Content-Type':'application/json'}})};
+test('submits bounded authenticated async jobs with a supported schema',async()=>{const job=await adapter.start('blinkit',brief,'owner');assert.equal(job.runId,'run-test');const req=JSON.parse(calls.at(-1).init.body);assert.equal(req.use_profile,true);assert.equal(req.profile_id,'prof_test');assert.equal(req.agent_config.max_steps,undefined);assert.equal(req.agent_config.max_duration_seconds,300);assert.equal(req.output_schema.type,'object');assert.ok(!JSON.stringify(req).includes('test-placeholder-not-a-real-key'));assert.match(req.goal,/Never place an order/);assert.match(req.goal,/at most THREE/);assert.match(req.goal,/cart first/);const ticket=await adapter.readTicket(job.ticket,'owner');assert.equal(ticket.runId,'run-test');});
+test('tickets cannot be used by another owner or tampered with',async()=>{const job=await adapter.start('blinkit',brief,'owner');await assert.rejects(()=>adapter.readTicket(job.ticket,'other'));await assert.rejects(()=>adapter.readTicket('A'+job.ticket.slice(1),'owner'));});
+test('expired tickets fail closed',async()=>{const ticket=await adapter.signTicket({runId:'test',store:'blinkit',brief,owner:'owner',phase:'build',expires:Date.now()-1});await assert.rejects(()=>adapter.readTicket(ticket,'owner'));});
+test('unconfigured stores do not start a request',async()=>{delete process.env.TINYFISH_PROFILE_ZEPTO;const count=calls.length;await assert.rejects(()=>adapter.start('zepto',brief,'owner'));assert.equal(calls.length,count)});
+test('COMPLETED alone is not checkout success',async()=>{nextResponse={status:'COMPLETED',result:{}};await assert.rejects(()=>adapter.inspect({runId:'test',store:'blinkit',brief,phase:'build'}));});
+test('structured quote is independently checked',async()=>{const q=fixtureQuote('blinkit',brief);q.total+=100;nextResponse={status:'COMPLETED',profile_attached:true,result:q,finished_at:new Date().toISOString()};const result=await adapter.inspect({runId:'test',store:'blinkit',brief,phase:'build'});assert.equal(result.quote.source,'live');assert.equal(result.quote.referee,false);assert.equal(result.validation.eligible,false)});
+test('referee goal is read-only and validates current evidence',()=>{const goal=adapter.goal(brief,'verify');assert.match(goal,/read-only referee/);assert.match(goal,/Do not add\/remove products or change coupons/);assert.match(goal,/Do not trial coupons/)});
+test('cross-origin writes are rejected',()=>{assert.throws(()=>adapter.assertOrigin(new Request('https://verro.example/api/compare',{headers:{origin:'https://other.example'}})));assert.doesNotThrow(()=>adapter.assertOrigin(new Request('https://verro.example/api/compare',{headers:{origin:'https://verro.example'}})))});
+
+test('missing authentication confirmation fails closed',async()=>{nextResponse={status:'COMPLETED',result:fixtureQuote('blinkit',brief),finished_at:new Date().toISOString(),profile_attached:false};await assert.rejects(()=>adapter.inspect({runId:'test',store:'blinkit',brief,phase:'build'}),/authenticated/)});
+test('missing provider timestamp cannot become a fresh quote',async()=>{nextResponse={status:'COMPLETED',result:fixtureQuote('blinkit',brief),profile_attached:true};await assert.rejects(()=>adapter.inspect({runId:'test',store:'blinkit',brief,phase:'build'}),/timestamp/)});

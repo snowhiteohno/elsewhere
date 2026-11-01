@@ -1,0 +1,8 @@
+import { STORES } from '../lib/verro.ts';
+export function fixtureQuote(store, brief, blocked=false) {
+  const idx=STORES.findIndex(s=>s.id===store);
+  const prices=[[54900,15800,22900],[52900,16000,22500],[53900,15800,23900]][idx];
+  const items=brief.items.map((item,i)=>({itemId:item.id,product:item.name,brand:"Test brand",productId:`sku-${i}`,variant:"Test variant",packLabel:`${item.amount} ${item.unit}`,imageUrl:"https://cdn.grofers.com/test.png",amount:item.amount,unit:item.unit,packs:1,price:prices[i%3],url:STORES[idx].url,status:blocked&&i===0?'unknown':'matched',evidence:'Test fixture: matching product type and exact requested quantity.',checks:[...item.requirements,brief.mode==='exact'?`Exact product: ${item.name}`:`Product type: ${item.name}`].map((r,j)=>({requirement:r,verdict:blocked&&i===0&&j===0?'unknown':'met',evidence:blocked&&i===0&&j===0?'Fixture: listing does not state this attribute.':'Test fixture: attribute stated on product label.'}))}));
+  const subtotal=items.reduce((n,x)=>n+x.price,0),delivery=[2500,3500,0][idx],platform=[600,1100,700][idx],other=[0,1500,0][idx],discount=brief.coupons?[2500,0,1500][idx]:0;
+  return {store,checkoutUrl:STORES[idx].url+'/cart',checkoutKind:'direct',checkoutEvidence:'Test fixture: observed checkout URL',currency:'INR',items,addressConfirmed:true,deliveryConfirmed:true,checkoutReached:true,existingCartClear:true,subtotal,delivery,platform,other,discount,total:subtotal+delivery+platform+other-discount,coupon:discount?'TEST OFFER':'None applied',eta:['18–25 min','12–18 min','20–30 min'][idx],checkedAt:new Date().toISOString(),note:'Test fixture only.',referee:false,source:'live'};
+}
