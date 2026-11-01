@@ -65,7 +65,7 @@ Global discovery does not mean every provider supports browser automation or ano
 
 ## Verification
 
-Live check on 2026-11-01: Booking.com returned three Lisbon stay options after selecting 20–23 November 2026 and two adults. Prices were displayed in USD although the input budget was EUR; the UI keeps these currencies separate and labels unverified taxes. Desktop and 390px mobile layouts were checked, including adding a real returned offer to the itinerary. Kyoto experience research and hotel booking preparation were still in progress at packaging time; no reservation or payment has been made.
+Live check on 2026-11-01: Booking.com returned three Lisbon stay options after selecting 20–23 November 2026 and two adults. Prices were displayed in USD although the input budget was EUR; the UI keeps these currencies separate and labels unverified taxes. Desktop and 390px mobile layouts were checked, including adding a real returned offer to the itinerary. Kyoto research reached MAIKOYA’s date-specific tea ceremony booking form; pricing still needs confirmation because peak-period rates may apply. Hotel preparation reopened the Lisbon selection, selected a room and returned cancellation terms and excluded taxes, then stopped for the user to finish the paid booking. No reservation or payment has been made.
 
 ```sh
 npm test
@@ -88,4 +88,4 @@ Live smoke tests use `scripts/check-travel-live.mjs` and store private run state
 
 The previous Verro grocery source is preserved in `lib/verro.ts`, `lib/tinyfish.ts` and its tests. Its original page/styles/README are backed up under ignored `work/verro-preserved/`. Grocery endpoints are retired and cannot start new grocery runs. The existing max_steps fix is preserved.
 
-Hero photograph: Unsplash, downloaded to `public/images/alpine-lake.jpg`. Destination inspiration tiles are starter inputs, not fabricated search results.
+Visual direction takes inspiration from Travel Productions: oversized condensed type, a dark cinematic canvas, layered imagery and editorial spacing. Photography is from Unsplash, stored in `public/images/`. Destination inspiration tiles are starter inputs, not fabricated search results. Antonio, DM Sans and Instrument Serif are self-hosted with their licenses in `public/fonts/`. Motion supports pause and reduced-motion preferences.
