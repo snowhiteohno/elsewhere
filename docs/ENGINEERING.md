@@ -46,7 +46,7 @@ npm run build
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_furry_the_hand.sql
 ```
 
-Sites provisions production D1 and applies migrations on deployment. Configure the three runtime keys as Sites secrets before publishing. Production write endpoints require the Sites-authenticated user; the existing owner-only audience is preserved. No separate travel-account sign-in is required for research.
+Sites provisions production D1 and applies migrations on deployment. Configure the three runtime keys as Sites secrets before publishing. Public travel endpoints use the Sites identity when available, otherwise a signed HttpOnly guest-session cookie. The deployment owner has authorised public judge access. No separate travel-account sign-in is required for research.
 
 Trip boards are saved in this browser's local storage; they do not sync across devices. Contact details for an approved free reservation are not saved in the trip board or D1 context, but are sent to TinyFish and the selected provider as disclosed in the approval form. Browser run history may contain submitted contact details.
 

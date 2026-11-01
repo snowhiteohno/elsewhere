@@ -7,7 +7,7 @@ A live travel concierge that opens booking websites, checks trip details and hel
 
 **Powered by TinyFish** · React · TypeScript · INR budgets
 
-[Explore the workflow](#explore-the-workflow) · [Run locally](#run-locally) · [Submission deck](submission/Elsewhere-Submission.pptx) · [Architecture](#under-the-hood)
+[Live app](https://cartproof.scalerailabs-4179.chatgpt.site) · [Explore the workflow](#explore-the-workflow) · [Run locally](#run-locally) · [Submission deck](submission/Elsewhere-Submission.pptx) · [Architecture](#under-the-hood)
 
 ![Elsewhere local application homepage](docs/images/elsewhere-home.png)
 
@@ -140,7 +140,7 @@ node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1
 npm run dev -- --host 127.0.0.1 --port 3004
 ```
 
-Open **http://127.0.0.1:3004**. This address is local to your computer, not a public demo URL. This GitHub upload does not deploy the app or change the earlier hosted site's access.
+Open **http://127.0.0.1:3004**. This address is local to your computer, not a public demo URL. The hosted app supports anonymous judge sessions; its live link is at the top of this README.
 
 The existing `.openai/hosting.json` identifies the original hosting project. Cloning the repository does not grant access to that project. Local development is the documented path here.
 
@@ -160,7 +160,7 @@ npx tsc --noEmit --incremental false
 npm run build
 ```
 
-The project currently has **16 travel tests and 32 preserved legacy tests**. Tests cover validation and safeguards, not universal third-party website compatibility. Unit tests do not require live API credentials.
+The project currently has **18 travel tests and 32 preserved legacy tests**. Tests cover validation and safeguards, not universal third-party website compatibility. Unit tests do not require live API credentials.
 
 ## Judge's notebook
 
@@ -227,3 +227,5 @@ The previous grocery experiment remains in legacy modules and tests. Its write e
 ## Credits
 
 Browser automation and search: [TinyFish](https://tinyfish.ai). Photography: Unsplash. Self-hosted fonts: Antonio, DM Sans and Instrument Serif, with licenses in [`public/fonts/`](public/fonts/). Visual inspiration: [Travel Productions](https://travelproductions.film/).
+
+Public visitors receive a signed, HttpOnly browser cookie to isolate their jobs without login. Keep cookies enabled. Clearing cookies loses access to earlier anonymous jobs. Browser usage draws from the deployment owner’s TinyFish account, with the existing per-session job limit. This is a hackathon prototype, not a hardened public billing service.
